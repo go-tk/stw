@@ -10,7 +10,7 @@ type SlidingTimeWindow struct {
 	totalCount      int
 }
 
-// NewSlidingTimeWindow creates a sliding time window with the given period and number of buckets.
+// NewSlidingTimeWindow creates a sliding time window with the given period and the given number of buckets.
 func NewSlidingTimeWindow(period time.Duration, numberOfBuckets int) *SlidingTimeWindow {
 	var stw SlidingTimeWindow
 	stw.periodPerBucket = (period + time.Duration(numberOfBuckets-1)) / time.Duration(numberOfBuckets)
@@ -18,7 +18,7 @@ func NewSlidingTimeWindow(period time.Duration, numberOfBuckets int) *SlidingTim
 	return &stw
 }
 
-// UpdateWithSample advances the window and puts the given sample into a bucket.
+// UpdateWithSample removes outdated samples and puts the given sample into a bucket.
 func (stw *SlidingTimeWindow) UpdateWithSample(now time.Time, x float64) {
 	bucketNumber := stw.doUpdate(now)
 	bucket := &stw.buckets[bucketNumber%int64(len(stw.buckets))]
@@ -32,7 +32,7 @@ func (stw *SlidingTimeWindow) UpdateWithSample(now time.Time, x float64) {
 	stw.totalCount++
 }
 
-// Update advances the window.
+// Update removes outdated samples.
 func (stw *SlidingTimeWindow) Update(now time.Time) { stw.doUpdate(now) }
 
 func (stw *SlidingTimeWindow) doUpdate(now time.Time) (bucketNumber0 int64) {

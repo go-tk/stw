@@ -5,3 +5,5 @@
 [![Coverage Status](https://codecov.io/gh/go-tk/stw/branch/main/graph/badge.svg)](https://codecov.io/gh/go-tk/stw/branch/main)
 
 An efficient implementation of Sliding Time Window Average
+
+[Example](./example_test.go)

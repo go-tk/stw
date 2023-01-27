@@ -251,6 +251,5 @@ func TestSlidingTimeWindow_Period_Average_Sum_Count(t *testing.T) {
 	assert.Equal(t, 11*time.Second, slidingTimeWindow.Period())
 	assert.Equal(t, 2.0, slidingTimeWindow.Average())
 	assert.Equal(t, 6.0, slidingTimeWindow.Sum())
-	assert.Equal(t, 6.0, slidingTimeWindow.Sum())
 	assert.Equal(t, 3, slidingTimeWindow.Count())
 }

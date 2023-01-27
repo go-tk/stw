@@ -5,6 +5,7 @@ import "time"
 // SlidingTimeWindow represents a sliding time window of samples.
 type SlidingTimeWindow struct {
 	periodPerBucket time.Duration
+	period          time.Duration
 	buckets         []bucket
 	totalSum        float64
 	totalCount      int
@@ -14,6 +15,7 @@ type SlidingTimeWindow struct {
 func NewSlidingTimeWindow(period time.Duration, numberOfBuckets int) *SlidingTimeWindow {
 	var stw SlidingTimeWindow
 	stw.periodPerBucket = (period + time.Duration(numberOfBuckets-1)) / time.Duration(numberOfBuckets)
+	stw.period = stw.periodPerBucket * time.Duration(numberOfBuckets)
 	stw.buckets = make([]bucket, numberOfBuckets)
 	return &stw
 }
@@ -23,7 +25,7 @@ func (stw *SlidingTimeWindow) UpdateWithSample(now time.Time, x float64) {
 	bucketNumber := stw.doUpdate(now)
 	bucket := &stw.buckets[bucketNumber%int64(len(stw.buckets))]
 	if bucket.number != bucketNumber {
-		// ignore
+		// Sample x is outdated, ignore it.
 		return
 	}
 	bucket.sum += x
@@ -38,6 +40,7 @@ func (stw *SlidingTimeWindow) Update(now time.Time) { stw.doUpdate(now) }
 func (stw *SlidingTimeWindow) doUpdate(now time.Time) (bucketNumber0 int64) {
 	bucketNumber0 = now.UnixNano() / int64(stw.periodPerBucket)
 	i0 := int(bucketNumber0 % int64(len(stw.buckets)))
+	// Reset buckets with outdated samples.
 	bucketNumber := bucketNumber0
 	for i := i0; i >= 0; i-- {
 		bucket := &stw.buckets[i]
@@ -63,8 +66,13 @@ func (stw *SlidingTimeWindow) doUpdate(now time.Time) (bucketNumber0 int64) {
 		bucket.count = 0
 		bucketNumber--
 	}
+	// If all buckets are reset, totalSum should be zero, otherwise it's caused by floating-point errors.
+	stw.totalSum = 0
 	return
 }
+
+// Period returns the period of the time window.
+func (stw *SlidingTimeWindow) Period() time.Duration { return stw.period }
 
 // Average returns the average of samples.
 func (stw *SlidingTimeWindow) Average() float64 { return stw.totalSum / float64(stw.totalCount) }

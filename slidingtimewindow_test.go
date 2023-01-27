@@ -28,6 +28,7 @@ func TestNewSlidingTimeWindow(t *testing.T) {
 		c.numberOfBuckets = 2
 		c.expectedState = `
 Period Per Bucket: 1.5s
+Period: 3s
 Buckets[0]:
 	Number: 0
 	Sum: 0
@@ -46,6 +47,7 @@ Total Count: 0
 		c.numberOfBuckets = 3
 		c.expectedState = `
 Period Per Bucket: 4ns
+Period: 12ns
 Buckets[0]:
 	Number: 0
 	Sum: 0
@@ -86,6 +88,7 @@ func TestSlidingTimeWindow_UpdateWithSample(t *testing.T) {
 		c.slidingTimeWindow.UpdateWithSample(time.Unix(1, 1234567), 99)
 		c.expectedState = `
 Period Per Bucket: 3s
+Period: 9s
 Buckets[0]:
 	Number: 3
 	Sum: 22
@@ -109,6 +112,7 @@ Total Count: 3
 		c.slidingTimeWindow.UpdateWithSample(time.Unix(16, 1234567), 11)
 		c.expectedState = `
 Period Per Bucket: 3s
+Period: 9s
 Buckets[0]:
 	Number: 3
 	Sum: 22
@@ -133,6 +137,7 @@ Total Count: 4
 		c.slidingTimeWindow.UpdateWithSample(time.Unix(21, 1234567), 33)
 		c.expectedState = `
 Period Per Bucket: 3s
+Period: 9s
 Buckets[0]:
 	Number: 6
 	Sum: 0
@@ -156,6 +161,7 @@ Total Count: 2
 		c.slidingTimeWindow.UpdateWithSample(time.Unix(23, 1234567), 99)
 		c.expectedState = `
 Period Per Bucket: 3s
+Period: 9s
 Buckets[0]:
 	Number: 6
 	Sum: 0
@@ -196,6 +202,7 @@ func TestSlidingTimeWindow_Update(t *testing.T) {
 		c.slidingTimeWindow.Update(time.Unix(18, 1234567))
 		c.expectedState = `
 Period Per Bucket: 3s
+Period: 9s
 Buckets[0]:
 	Number: 6
 	Sum: 0
@@ -217,6 +224,7 @@ Total Count: 2
 		c.slidingTimeWindow.Update(time.Unix(23, 1234567))
 		c.expectedState = `
 Period Per Bucket: 3s
+Period: 9s
 Buckets[0]:
 	Number: 6
 	Sum: 0
@@ -233,4 +241,16 @@ Total Sum: 0
 Total Count: 0
 `[1:]
 	}).Run(t)
+}
+
+func TestSlidingTimeWindow_Period_Average_Sum_Count(t *testing.T) {
+	slidingTimeWindow := stw.NewSlidingTimeWindow(11*time.Second, 22)
+	slidingTimeWindow.UpdateWithSample(time.Now(), 1)
+	slidingTimeWindow.UpdateWithSample(time.Now(), 2)
+	slidingTimeWindow.UpdateWithSample(time.Now(), 3)
+	assert.Equal(t, 11*time.Second, slidingTimeWindow.Period())
+	assert.Equal(t, 2.0, slidingTimeWindow.Average())
+	assert.Equal(t, 6.0, slidingTimeWindow.Sum())
+	assert.Equal(t, 6.0, slidingTimeWindow.Sum())
+	assert.Equal(t, 3, slidingTimeWindow.Count())
 }

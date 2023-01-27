@@ -1,6 +1,6 @@
 module github.com/go-tk/stw
 
-go 1.17
+go 1.19
 
 require (
 	github.com/go-tk/testcase v0.7.1

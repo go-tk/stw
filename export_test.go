@@ -13,6 +13,7 @@ func (stw *SlidingTimeWindow) DumpAsString(prefix string) string {
 
 func (stw *SlidingTimeWindow) Dump(prefix string, buffer *bytes.Buffer) {
 	fmt.Fprintf(buffer, "%sPeriod Per Bucket: %v\n", prefix, stw.periodPerBucket)
+	fmt.Fprintf(buffer, "%sPeriod: %v\n", prefix, stw.period)
 	for i := range stw.buckets {
 		fmt.Fprintf(buffer, "%sBuckets[%d]:\n", prefix, i)
 		bucket := &stw.buckets[i]

@@ -1,6 +1,7 @@
 package stw_test
 
 import (
+	"math"
 	"testing"
 	"time"
 
@@ -33,10 +34,14 @@ Buckets[0]:
 	Number: 0
 	Sum: 0
 	Count: 0
+	Min: +Inf
+	Max: -Inf
 Buckets[1]:
 	Number: 0
 	Sum: 0
 	Count: 0
+	Min: +Inf
+	Max: -Inf
 Total Sum: 0
 Total Count: 0
 `[1:]
@@ -52,14 +57,20 @@ Buckets[0]:
 	Number: 0
 	Sum: 0
 	Count: 0
+	Min: +Inf
+	Max: -Inf
 Buckets[1]:
 	Number: 0
 	Sum: 0
 	Count: 0
+	Min: +Inf
+	Max: -Inf
 Buckets[2]:
 	Number: 0
 	Sum: 0
 	Count: 0
+	Min: +Inf
+	Max: -Inf
 Total Sum: 0
 Total Count: 0
 `[1:]
@@ -93,14 +104,20 @@ Buckets[0]:
 	Number: 3
 	Sum: 22
 	Count: 1
+	Min: 22
+	Max: 22
 Buckets[1]:
 	Number: 4
 	Sum: 77
 	Count: 2
+	Min: 33
+	Max: 44
 Buckets[2]:
 	Number: 2
 	Sum: 0
 	Count: 0
+	Min: +Inf
+	Max: -Inf
 Total Sum: 99
 Total Count: 3
 `[1:]
@@ -117,14 +134,20 @@ Buckets[0]:
 	Number: 3
 	Sum: 22
 	Count: 1
+	Min: 22
+	Max: 22
 Buckets[1]:
 	Number: 4
 	Sum: 77
 	Count: 2
+	Min: 33
+	Max: 44
 Buckets[2]:
 	Number: 5
 	Sum: 11
 	Count: 1
+	Min: 11
+	Max: 11
 Total Sum: 110
 Total Count: 4
 `[1:]
@@ -142,14 +165,20 @@ Buckets[0]:
 	Number: 6
 	Sum: 0
 	Count: 0
+	Min: +Inf
+	Max: -Inf
 Buckets[1]:
 	Number: 7
 	Sum: 33
 	Count: 1
+	Min: 33
+	Max: 33
 Buckets[2]:
 	Number: 5
 	Sum: 11
 	Count: 1
+	Min: 11
+	Max: 11
 Total Sum: 44
 Total Count: 2
 `[1:]
@@ -166,14 +195,20 @@ Buckets[0]:
 	Number: 6
 	Sum: 0
 	Count: 0
+	Min: +Inf
+	Max: -Inf
 Buckets[1]:
 	Number: 7
 	Sum: 99
 	Count: 1
+	Min: 99
+	Max: 99
 Buckets[2]:
 	Number: 5
 	Sum: 0
 	Count: 0
+	Min: +Inf
+	Max: -Inf
 Total Sum: 99
 Total Count: 1
 `[1:]
@@ -190,6 +225,7 @@ func TestSlidingTimeWindow_Update(t *testing.T) {
 		slidingTimeWindow.UpdateWithSample(time.Unix(11, 1234567), 22)
 		slidingTimeWindow.UpdateWithSample(time.Unix(12, 1234567), 33)
 		slidingTimeWindow.UpdateWithSample(time.Unix(13, 1234567), 44)
+		slidingTimeWindow.UpdateWithSample(time.Unix(14, 1234567), 55)
 		c.slidingTimeWindow = slidingTimeWindow
 
 		testcase.DoCallback(0, t, c)
@@ -207,16 +243,22 @@ Buckets[0]:
 	Number: 6
 	Sum: 0
 	Count: 0
+	Min: +Inf
+	Max: -Inf
 Buckets[1]:
 	Number: 4
-	Sum: 77
-	Count: 2
+	Sum: 132
+	Count: 3
+	Min: 33
+	Max: 55
 Buckets[2]:
 	Number: 5
 	Sum: 0
 	Count: 0
-Total Sum: 77
-Total Count: 2
+	Min: +Inf
+	Max: -Inf
+Total Sum: 132
+Total Count: 3
 `[1:]
 	}).Run(t)
 
@@ -229,14 +271,20 @@ Buckets[0]:
 	Number: 6
 	Sum: 0
 	Count: 0
+	Min: +Inf
+	Max: -Inf
 Buckets[1]:
 	Number: 7
 	Sum: 0
 	Count: 0
+	Min: +Inf
+	Max: -Inf
 Buckets[2]:
 	Number: 5
 	Sum: 0
 	Count: 0
+	Min: +Inf
+	Max: -Inf
 Total Sum: 0
 Total Count: 0
 `[1:]
@@ -245,6 +293,7 @@ Total Count: 0
 
 func TestSlidingTimeWindow_Period_Average_Sum_Count(t *testing.T) {
 	slidingTimeWindow := stw.NewSlidingTimeWindow(11*time.Second, 22)
+	assert.True(t, math.IsNaN(slidingTimeWindow.Average()))
 	slidingTimeWindow.UpdateWithSample(time.Now(), 1)
 	slidingTimeWindow.UpdateWithSample(time.Now(), 2)
 	slidingTimeWindow.UpdateWithSample(time.Now(), 3)
@@ -252,4 +301,17 @@ func TestSlidingTimeWindow_Period_Average_Sum_Count(t *testing.T) {
 	assert.Equal(t, 2.0, slidingTimeWindow.Average())
 	assert.Equal(t, 6.0, slidingTimeWindow.Sum())
 	assert.Equal(t, 3, slidingTimeWindow.Count())
+}
+
+func TestSlidingTimeWindow_Min_Max(t *testing.T) {
+	slidingTimeWindow := stw.NewSlidingTimeWindow(9*time.Second, 3)
+	slidingTimeWindow.UpdateWithSample(time.Unix(10, 1234567), -11)
+	slidingTimeWindow.UpdateWithSample(time.Unix(11, 1234567), 222)
+	slidingTimeWindow.UpdateWithSample(time.Unix(12, 1234567), 33)
+	slidingTimeWindow.UpdateWithSample(time.Unix(13, 1234567), -444)
+	slidingTimeWindow.UpdateWithSample(time.Unix(14, 1234567), 55)
+	slidingTimeWindow.UpdateWithSample(time.Unix(15, 1234567), 666)
+	slidingTimeWindow.UpdateWithSample(time.Unix(16, 1234567), -77)
+	assert.Equal(t, -444.0, slidingTimeWindow.Min())
+	assert.Equal(t, 666.0, slidingTimeWindow.Max())
 }

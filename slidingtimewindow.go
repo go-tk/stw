@@ -33,8 +33,8 @@ func NewSlidingTimeWindow(period time.Duration, numberOfBuckets int) *SlidingTim
 	return &stw
 }
 
-// UpdateWithSample removes outdated samples and puts the given sample into a bucket.
-func (stw *SlidingTimeWindow) UpdateWithSample(now time.Time, x float64) {
+// AddSample puts the given sample into a bucket and removes outdated samples.
+func (stw *SlidingTimeWindow) AddSample(now time.Time, x float64) {
 	bucketNumber := stw.doUpdate(now.UnixNano())
 	bucket := &stw.buckets[bucketNumber%int64(len(stw.buckets))]
 	if bucket.number != bucketNumber {

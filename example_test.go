@@ -11,17 +11,17 @@ func ExampleSlidingTimeWindow() {
 	stw := stw.NewSlidingTimeWindow(300*time.Millisecond /* period */, 3 /* numberOfBuckets */)
 	fmt.Println("1) Sample Count:", stw.Count(), "Sum:", stw.Sum(), "Average:", stw.Average())
 
-	stw.UpdateWithSample(time.Now(), 1)
+	stw.AddSample(time.Now(), 1)
 	fmt.Println("2) Sample Count:", stw.Count(), "Sum:", stw.Sum(), "Average:", stw.Average())
 
 	time.Sleep(151 * time.Millisecond)
 
-	stw.UpdateWithSample(time.Now(), 10)
+	stw.AddSample(time.Now(), 10)
 	fmt.Println("3) Sample Count:", stw.Count(), "Sum:", stw.Sum(), "Average:", stw.Average())
 
 	time.Sleep(151 * time.Millisecond)
 
-	stw.UpdateWithSample(time.Now(), 100)
+	stw.AddSample(time.Now(), 100)
 	fmt.Println("4) Sample Count:", stw.Count(), "Sum:", stw.Sum(), "Average:", stw.Average())
 
 	time.Sleep(151 * time.Millisecond)

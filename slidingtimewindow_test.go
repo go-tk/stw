@@ -77,14 +77,14 @@ Total Count: 0
 	}).Run(t)
 }
 
-func TestSlidingTimeWindow_UpdateWithSample(t *testing.T) {
+func TestSlidingTimeWindow_AddSample(t *testing.T) {
 	type C struct {
 		slidingTimeWindow *stw.SlidingTimeWindow
 		expectedState     string
 	}
 	tc := testcase.New(func(t *testing.T, c *C) {
 		slidingTimeWindow := stw.NewSlidingTimeWindow(9*time.Second, 3)
-		slidingTimeWindow.UpdateWithSample(time.Unix(12, 1234567), 33)
+		slidingTimeWindow.AddSample(time.Unix(12, 1234567), 33)
 		c.slidingTimeWindow = slidingTimeWindow
 
 		testcase.DoCallback(0, t, c)
@@ -94,9 +94,9 @@ func TestSlidingTimeWindow_UpdateWithSample(t *testing.T) {
 	})
 
 	tc.Copy().SetCallback(0, func(t *testing.T, c *C) {
-		c.slidingTimeWindow.UpdateWithSample(time.Unix(11, 1234567), 22)
-		c.slidingTimeWindow.UpdateWithSample(time.Unix(13, 1234567), 44)
-		c.slidingTimeWindow.UpdateWithSample(time.Unix(1, 1234567), 99)
+		c.slidingTimeWindow.AddSample(time.Unix(11, 1234567), 22)
+		c.slidingTimeWindow.AddSample(time.Unix(13, 1234567), 44)
+		c.slidingTimeWindow.AddSample(time.Unix(1, 1234567), 99)
 		c.expectedState = `
 Period Per Bucket: 3s
 Period: 9s
@@ -124,9 +124,9 @@ Total Count: 3
 	}).Run(t)
 
 	tc.Copy().SetCallback(0, func(t *testing.T, c *C) {
-		c.slidingTimeWindow.UpdateWithSample(time.Unix(11, 1234567), 22)
-		c.slidingTimeWindow.UpdateWithSample(time.Unix(13, 1234567), 44)
-		c.slidingTimeWindow.UpdateWithSample(time.Unix(16, 1234567), 11)
+		c.slidingTimeWindow.AddSample(time.Unix(11, 1234567), 22)
+		c.slidingTimeWindow.AddSample(time.Unix(13, 1234567), 44)
+		c.slidingTimeWindow.AddSample(time.Unix(16, 1234567), 11)
 		c.expectedState = `
 Period Per Bucket: 3s
 Period: 9s
@@ -154,10 +154,10 @@ Total Count: 4
 	}).Run(t)
 
 	tc.Copy().SetCallback(0, func(t *testing.T, c *C) {
-		c.slidingTimeWindow.UpdateWithSample(time.Unix(11, 1234567), 22)
-		c.slidingTimeWindow.UpdateWithSample(time.Unix(13, 1234567), 44)
-		c.slidingTimeWindow.UpdateWithSample(time.Unix(16, 1234567), 11)
-		c.slidingTimeWindow.UpdateWithSample(time.Unix(21, 1234567), 33)
+		c.slidingTimeWindow.AddSample(time.Unix(11, 1234567), 22)
+		c.slidingTimeWindow.AddSample(time.Unix(13, 1234567), 44)
+		c.slidingTimeWindow.AddSample(time.Unix(16, 1234567), 11)
+		c.slidingTimeWindow.AddSample(time.Unix(21, 1234567), 33)
 		c.expectedState = `
 Period Per Bucket: 3s
 Period: 9s
@@ -185,9 +185,9 @@ Total Count: 2
 	}).Run(t)
 
 	tc.Copy().SetCallback(0, func(t *testing.T, c *C) {
-		c.slidingTimeWindow.UpdateWithSample(time.Unix(11, 1234567), 22)
-		c.slidingTimeWindow.UpdateWithSample(time.Unix(13, 1234567), 44)
-		c.slidingTimeWindow.UpdateWithSample(time.Unix(23, 1234567), 99)
+		c.slidingTimeWindow.AddSample(time.Unix(11, 1234567), 22)
+		c.slidingTimeWindow.AddSample(time.Unix(13, 1234567), 44)
+		c.slidingTimeWindow.AddSample(time.Unix(23, 1234567), 99)
 		c.expectedState = `
 Period Per Bucket: 3s
 Period: 9s
@@ -222,10 +222,10 @@ func TestSlidingTimeWindow_Update(t *testing.T) {
 	}
 	tc := testcase.New(func(t *testing.T, c *C) {
 		slidingTimeWindow := stw.NewSlidingTimeWindow(9*time.Second, 3)
-		slidingTimeWindow.UpdateWithSample(time.Unix(11, 1234567), 22)
-		slidingTimeWindow.UpdateWithSample(time.Unix(12, 1234567), 33)
-		slidingTimeWindow.UpdateWithSample(time.Unix(13, 1234567), 44)
-		slidingTimeWindow.UpdateWithSample(time.Unix(14, 1234567), 55)
+		slidingTimeWindow.AddSample(time.Unix(11, 1234567), 22)
+		slidingTimeWindow.AddSample(time.Unix(12, 1234567), 33)
+		slidingTimeWindow.AddSample(time.Unix(13, 1234567), 44)
+		slidingTimeWindow.AddSample(time.Unix(14, 1234567), 55)
 		c.slidingTimeWindow = slidingTimeWindow
 
 		testcase.DoCallback(0, t, c)
@@ -294,9 +294,9 @@ Total Count: 0
 func TestSlidingTimeWindow_Period_Average_Sum_Count(t *testing.T) {
 	slidingTimeWindow := stw.NewSlidingTimeWindow(11*time.Second, 22)
 	assert.True(t, math.IsNaN(slidingTimeWindow.Average()))
-	slidingTimeWindow.UpdateWithSample(time.Now(), 1)
-	slidingTimeWindow.UpdateWithSample(time.Now(), 2)
-	slidingTimeWindow.UpdateWithSample(time.Now(), 3)
+	slidingTimeWindow.AddSample(time.Now(), 1)
+	slidingTimeWindow.AddSample(time.Now(), 2)
+	slidingTimeWindow.AddSample(time.Now(), 3)
 	assert.Equal(t, 11*time.Second, slidingTimeWindow.Period())
 	assert.Equal(t, 2.0, slidingTimeWindow.Average())
 	assert.Equal(t, 6.0, slidingTimeWindow.Sum())
@@ -305,13 +305,13 @@ func TestSlidingTimeWindow_Period_Average_Sum_Count(t *testing.T) {
 
 func TestSlidingTimeWindow_Min_Max(t *testing.T) {
 	slidingTimeWindow := stw.NewSlidingTimeWindow(9*time.Second, 3)
-	slidingTimeWindow.UpdateWithSample(time.Unix(10, 1234567), -11)
-	slidingTimeWindow.UpdateWithSample(time.Unix(11, 1234567), 222)
-	slidingTimeWindow.UpdateWithSample(time.Unix(12, 1234567), 33)
-	slidingTimeWindow.UpdateWithSample(time.Unix(13, 1234567), -444)
-	slidingTimeWindow.UpdateWithSample(time.Unix(14, 1234567), 55)
-	slidingTimeWindow.UpdateWithSample(time.Unix(15, 1234567), 666)
-	slidingTimeWindow.UpdateWithSample(time.Unix(16, 1234567), -77)
+	slidingTimeWindow.AddSample(time.Unix(10, 1234567), -11)
+	slidingTimeWindow.AddSample(time.Unix(11, 1234567), 222)
+	slidingTimeWindow.AddSample(time.Unix(12, 1234567), 33)
+	slidingTimeWindow.AddSample(time.Unix(13, 1234567), -444)
+	slidingTimeWindow.AddSample(time.Unix(14, 1234567), 55)
+	slidingTimeWindow.AddSample(time.Unix(15, 1234567), 666)
+	slidingTimeWindow.AddSample(time.Unix(16, 1234567), -77)
 	assert.Equal(t, -444.0, slidingTimeWindow.Min())
 	assert.Equal(t, 666.0, slidingTimeWindow.Max())
 }

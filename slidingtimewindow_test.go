@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/go-tk/stw"
+	. "github.com/go-tk/stw"
 	"github.com/go-tk/testcase"
 	"github.com/stretchr/testify/assert"
 )
@@ -19,7 +19,7 @@ func TestNewSlidingTimeWindow(t *testing.T) {
 	tc := testcase.New(func(t *testing.T, c *C) {
 		testcase.DoCallback(0, t, c)
 
-		slidingTimeWindow := stw.NewSlidingTimeWindow(c.period, c.numberOfBuckets)
+		slidingTimeWindow := NewSlidingTimeWindow(c.period, c.numberOfBuckets)
 		state := slidingTimeWindow.DumpAsString("")
 		assert.Equal(t, c.expectedState, state)
 	})
@@ -79,11 +79,11 @@ Total Count: 0
 
 func TestSlidingTimeWindow_AddSample(t *testing.T) {
 	type C struct {
-		slidingTimeWindow *stw.SlidingTimeWindow
+		slidingTimeWindow *SlidingTimeWindow
 		expectedState     string
 	}
 	tc := testcase.New(func(t *testing.T, c *C) {
-		slidingTimeWindow := stw.NewSlidingTimeWindow(9*time.Second, 3)
+		slidingTimeWindow := NewSlidingTimeWindow(9*time.Second, 3)
 		slidingTimeWindow.AddSample(time.Unix(12, 1234567), 33)
 		c.slidingTimeWindow = slidingTimeWindow
 
@@ -217,11 +217,11 @@ Total Count: 1
 
 func TestSlidingTimeWindow_Advance(t *testing.T) {
 	type C struct {
-		slidingTimeWindow *stw.SlidingTimeWindow
+		slidingTimeWindow *SlidingTimeWindow
 		expectedState     string
 	}
 	tc := testcase.New(func(t *testing.T, c *C) {
-		slidingTimeWindow := stw.NewSlidingTimeWindow(9*time.Second, 3)
+		slidingTimeWindow := NewSlidingTimeWindow(9*time.Second, 3)
 		slidingTimeWindow.AddSample(time.Unix(11, 1234567), 22)
 		slidingTimeWindow.AddSample(time.Unix(12, 1234567), 33)
 		slidingTimeWindow.AddSample(time.Unix(13, 1234567), 44)
@@ -292,7 +292,7 @@ Total Count: 0
 }
 
 func TestSlidingTimeWindow_Period_Average_Sum_Count(t *testing.T) {
-	slidingTimeWindow := stw.NewSlidingTimeWindow(11*time.Second, 22)
+	slidingTimeWindow := NewSlidingTimeWindow(11*time.Second, 22)
 	assert.True(t, math.IsNaN(slidingTimeWindow.Average()))
 	slidingTimeWindow.AddSample(time.Now(), 1)
 	slidingTimeWindow.AddSample(time.Now(), 2)
@@ -304,7 +304,9 @@ func TestSlidingTimeWindow_Period_Average_Sum_Count(t *testing.T) {
 }
 
 func TestSlidingTimeWindow_Min_Max(t *testing.T) {
-	slidingTimeWindow := stw.NewSlidingTimeWindow(9*time.Second, 3)
+	slidingTimeWindow := NewSlidingTimeWindow(9*time.Second, 3)
+	assert.True(t, math.IsInf(slidingTimeWindow.Min(), +1))
+	assert.True(t, math.IsInf(slidingTimeWindow.Max(), -1))
 	slidingTimeWindow.AddSample(time.Unix(10, 1234567), -11)
 	slidingTimeWindow.AddSample(time.Unix(11, 1234567), 222)
 	slidingTimeWindow.AddSample(time.Unix(12, 1234567), 33)
@@ -314,4 +316,38 @@ func TestSlidingTimeWindow_Min_Max(t *testing.T) {
 	slidingTimeWindow.AddSample(time.Unix(16, 1234567), -77)
 	assert.Equal(t, -444.0, slidingTimeWindow.Min())
 	assert.Equal(t, 666.0, slidingTimeWindow.Max())
+}
+
+func TestSlidingTimeWindow_Reduce(t *testing.T) {
+	slidingTimeWindow := NewSlidingTimeWindow(9*time.Second, 3)
+	slidingTimeWindow.AddSample(time.Unix(11, 1234567), 22)
+	slidingTimeWindow.AddSample(time.Unix(12, 1234567), 33)
+	slidingTimeWindow.AddSample(time.Unix(13, 1234567), 44)
+
+	{
+		x := slidingTimeWindow.Reduce(0, func(x float64, bucket Bucket) (y float64) {
+			return x + float64(bucket.Count)
+		})
+		assert.Equal(t, x, 3.0)
+	}
+
+	{
+		x := slidingTimeWindow.Reduce(math.Inf(-1), func(x float64, bucket Bucket) (y float64) {
+			if bucket.Count == 0 {
+				return x
+			}
+			return math.Max(x, bucket.Sum/float64(bucket.Count))
+		})
+		assert.Equal(t, x, 38.5)
+	}
+
+	{
+		x := slidingTimeWindow.Reduce(math.Inf(+1), func(x float64, bucket Bucket) (y float64) {
+			if bucket.Count == 0 {
+				return x
+			}
+			return math.Min(x, bucket.Sum/float64(bucket.Count))
+		})
+		assert.Equal(t, x, 22.0)
+	}
 }

@@ -5,11 +5,6 @@ import (
 	"time"
 )
 
-var (
-	pinf = math.Inf(+1)
-	ninf = math.Inf(-1)
-)
-
 // SlidingTimeWindow represents a sliding time window of samples.
 type SlidingTimeWindow struct {
 	periodPerBucket time.Duration
@@ -27,8 +22,8 @@ func NewSlidingTimeWindow(period time.Duration, numberOfBuckets int) *SlidingTim
 	stw.buckets = make([]bucket, numberOfBuckets)
 	for i := range stw.buckets {
 		bucket := &stw.buckets[i]
-		bucket.Min = pinf
-		bucket.Max = ninf
+		bucket.Min = math.Inf(+1)
+		bucket.Max = math.Inf(-1)
 	}
 	return &stw
 }
@@ -67,8 +62,8 @@ func (stw *SlidingTimeWindow) doAdvance(now int64) (bucketNumber0 int64) {
 		bucket.Sum = 0
 		stw.totalCount -= bucket.Count
 		bucket.Count = 0
-		bucket.Min = pinf
-		bucket.Max = ninf
+		bucket.Min = math.Inf(+1)
+		bucket.Max = math.Inf(-1)
 		bucketNumber--
 	}
 	for i := len(stw.buckets) - 1; i > i0; i-- {
@@ -81,8 +76,8 @@ func (stw *SlidingTimeWindow) doAdvance(now int64) (bucketNumber0 int64) {
 		bucket.Sum = 0
 		stw.totalCount -= bucket.Count
 		bucket.Count = 0
-		bucket.Min = pinf
-		bucket.Max = ninf
+		bucket.Min = math.Inf(+1)
+		bucket.Max = math.Inf(-1)
 		bucketNumber--
 	}
 	// If all buckets are reset, totalSum should be zero, otherwise it's caused by floating-point errors.
@@ -104,7 +99,7 @@ func (stw *SlidingTimeWindow) Count() int { return stw.totalCount }
 
 // Min returns the minimum of samples. If there is no sample, +Inf is returned.
 func (stw *SlidingTimeWindow) Min() float64 {
-	min := pinf
+	min := math.Inf(+1)
 	for i := range stw.buckets {
 		min = math.Min(min, stw.buckets[i].Min)
 	}
@@ -113,20 +108,21 @@ func (stw *SlidingTimeWindow) Min() float64 {
 
 // Max returns the maximum of samples. If there is no sample, -Inf is returned.
 func (stw *SlidingTimeWindow) Max() float64 {
-	max := ninf
+	max := math.Inf(-1)
 	for i := range stw.buckets {
 		max = math.Max(max, stw.buckets[i].Max)
 	}
 	return max
 }
 
-// func (stw *SlidingTimeWindow) Reduce(x0 float64, f func(x float64, bucket Bucket) (y float64)) (x float64) {
-//	x = x0
-//	for i := range stw.buckets {
-//		x = f(x, stw.buckets[i].Bucket)
-//	}
-//	return
-// }
+// Reduce aggregates samples into a single value.
+func (stw *SlidingTimeWindow) Reduce(x0 float64, f func(x float64, bucket Bucket) (y float64)) (x float64) {
+	x = x0
+	for i := range stw.buckets {
+		x = f(x, stw.buckets[i].Bucket)
+	}
+	return
+}
 
 type bucket struct {
 	number int64

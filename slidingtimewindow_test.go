@@ -215,7 +215,7 @@ Total Count: 1
 	}).Run(t)
 }
 
-func TestSlidingTimeWindow_Update(t *testing.T) {
+func TestSlidingTimeWindow_Advance(t *testing.T) {
 	type C struct {
 		slidingTimeWindow *stw.SlidingTimeWindow
 		expectedState     string
@@ -235,7 +235,7 @@ func TestSlidingTimeWindow_Update(t *testing.T) {
 	})
 
 	tc.Copy().SetCallback(0, func(t *testing.T, c *C) {
-		c.slidingTimeWindow.Update(time.Unix(18, 1234567))
+		c.slidingTimeWindow.Advance(time.Unix(18, 1234567))
 		c.expectedState = `
 Period Per Bucket: 3s
 Period: 9s
@@ -263,7 +263,7 @@ Total Count: 3
 	}).Run(t)
 
 	tc.Copy().SetCallback(0, func(t *testing.T, c *C) {
-		c.slidingTimeWindow.Update(time.Unix(23, 1234567))
+		c.slidingTimeWindow.Advance(time.Unix(23, 1234567))
 		c.expectedState = `
 Period Per Bucket: 3s
 Period: 9s

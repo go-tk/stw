@@ -26,12 +26,12 @@ func ExampleSlidingTimeWindow() {
 
 	time.Sleep(151 * time.Millisecond)
 
-	stw.Update(time.Now())
+	stw.Advance(time.Now())
 	fmt.Println("5) Sample Count:", stw.Count(), "Sum:", stw.Sum(), "Average:", stw.Average())
 
 	time.Sleep(151 * time.Millisecond)
 
-	stw.Update(time.Now())
+	stw.Advance(time.Now())
 	fmt.Println("6) Sample Count:", stw.Count(), "Sum:", stw.Sum(), "Average:", stw.Average())
 
 	// Output:

@@ -27,32 +27,32 @@ func NewSlidingTimeWindow(period time.Duration, numberOfBuckets int) *SlidingTim
 	stw.buckets = make([]bucket, numberOfBuckets)
 	for i := range stw.buckets {
 		bucket := &stw.buckets[i]
-		bucket.min = pinf
-		bucket.max = ninf
+		bucket.Min = pinf
+		bucket.Max = ninf
 	}
 	return &stw
 }
 
 // AddSample puts the given sample into a bucket and removes outdated samples.
 func (stw *SlidingTimeWindow) AddSample(now time.Time, x float64) {
-	bucketNumber := stw.doUpdate(now.UnixNano())
+	bucketNumber := stw.doAdvance(now.UnixNano())
 	bucket := &stw.buckets[bucketNumber%int64(len(stw.buckets))]
 	if bucket.number != bucketNumber {
 		// Sample x is outdated, ignore it.
 		return
 	}
-	bucket.sum += x
+	bucket.Sum += x
 	stw.totalSum += x
-	bucket.count++
+	bucket.Count++
 	stw.totalCount++
-	bucket.min = math.Min(bucket.min, x)
-	bucket.max = math.Max(bucket.max, x)
+	bucket.Min = math.Min(bucket.Min, x)
+	bucket.Max = math.Max(bucket.Max, x)
 }
 
-// Update removes outdated samples.
-func (stw *SlidingTimeWindow) Update(now time.Time) { stw.doUpdate(now.UnixNano()) }
+// Advance removes outdated samples.
+func (stw *SlidingTimeWindow) Advance(now time.Time) { stw.doAdvance(now.UnixNano()) }
 
-func (stw *SlidingTimeWindow) doUpdate(now int64) (bucketNumber0 int64) {
+func (stw *SlidingTimeWindow) doAdvance(now int64) (bucketNumber0 int64) {
 	bucketNumber0 = now / int64(stw.periodPerBucket)
 	i0 := int(bucketNumber0 % int64(len(stw.buckets)))
 	// Reset buckets with outdated samples.
@@ -63,12 +63,12 @@ func (stw *SlidingTimeWindow) doUpdate(now int64) (bucketNumber0 int64) {
 			return
 		}
 		bucket.number = bucketNumber
-		stw.totalSum -= bucket.sum
-		bucket.sum = 0
-		stw.totalCount -= bucket.count
-		bucket.count = 0
-		bucket.min = pinf
-		bucket.max = ninf
+		stw.totalSum -= bucket.Sum
+		bucket.Sum = 0
+		stw.totalCount -= bucket.Count
+		bucket.Count = 0
+		bucket.Min = pinf
+		bucket.Max = ninf
 		bucketNumber--
 	}
 	for i := len(stw.buckets) - 1; i > i0; i-- {
@@ -77,12 +77,12 @@ func (stw *SlidingTimeWindow) doUpdate(now int64) (bucketNumber0 int64) {
 			return
 		}
 		bucket.number = bucketNumber
-		stw.totalSum -= bucket.sum
-		bucket.sum = 0
-		stw.totalCount -= bucket.count
-		bucket.count = 0
-		bucket.min = pinf
-		bucket.max = ninf
+		stw.totalSum -= bucket.Sum
+		bucket.Sum = 0
+		stw.totalCount -= bucket.Count
+		bucket.Count = 0
+		bucket.Min = pinf
+		bucket.Max = ninf
 		bucketNumber--
 	}
 	// If all buckets are reset, totalSum should be zero, otherwise it's caused by floating-point errors.
@@ -106,7 +106,7 @@ func (stw *SlidingTimeWindow) Count() int { return stw.totalCount }
 func (stw *SlidingTimeWindow) Min() float64 {
 	min := pinf
 	for i := range stw.buckets {
-		min = math.Min(min, stw.buckets[i].min)
+		min = math.Min(min, stw.buckets[i].Min)
 	}
 	return min
 }
@@ -115,15 +115,29 @@ func (stw *SlidingTimeWindow) Min() float64 {
 func (stw *SlidingTimeWindow) Max() float64 {
 	max := ninf
 	for i := range stw.buckets {
-		max = math.Max(max, stw.buckets[i].max)
+		max = math.Max(max, stw.buckets[i].Max)
 	}
 	return max
 }
 
+// func (stw *SlidingTimeWindow) Reduce(x0 float64, f func(x float64, bucket Bucket) (y float64)) (x float64) {
+//	x = x0
+//	for i := range stw.buckets {
+//		x = f(x, stw.buckets[i].Bucket)
+//	}
+//	return
+// }
+
 type bucket struct {
 	number int64
-	sum    float64
-	count  int
-	min    float64
-	max    float64
+
+	Bucket
+}
+
+// Bucket represents a subset of samples.
+type Bucket struct {
+	Sum   float64
+	Count int
+	Min   float64
+	Max   float64
 }

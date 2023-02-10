@@ -25,8 +25,8 @@ func (stw *SlidingTimeWindow) Dump(prefix string, buffer *bytes.Buffer) {
 
 func (stw *SlidingTimeWindow) dumpBucket(bucket *bucket, prefix string, buffer *bytes.Buffer) {
 	fmt.Fprintf(buffer, "%sNumber: %v\n", prefix, bucket.number)
-	fmt.Fprintf(buffer, "%sSum: %v\n", prefix, bucket.sum)
-	fmt.Fprintf(buffer, "%sCount: %v\n", prefix, bucket.count)
-	fmt.Fprintf(buffer, "%sMin: %v\n", prefix, bucket.min)
-	fmt.Fprintf(buffer, "%sMax: %v\n", prefix, bucket.max)
+	fmt.Fprintf(buffer, "%sSum: %v\n", prefix, bucket.Sum)
+	fmt.Fprintf(buffer, "%sCount: %v\n", prefix, bucket.Count)
+	fmt.Fprintf(buffer, "%sMin: %v\n", prefix, bucket.Min)
+	fmt.Fprintf(buffer, "%sMax: %v\n", prefix, bucket.Max)
 }
